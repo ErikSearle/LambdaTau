@@ -58,6 +58,7 @@ public class Client{
      */
     public void send(char[] message) throws IOException{
         output.write(encryptor.encrypt(message), 0, message.length);
+        output.flush();
     }
 
     /**
