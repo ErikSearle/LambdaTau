@@ -20,7 +20,7 @@ public class Connection implements Runnable {
         this.socket = socket;
         input = new InputStreamReader(this.socket.getInputStream());
         output = new OutputStreamWriter(this.socket.getOutputStream());
-        encryptor = Encryptor.negotiateKeys(input, output);
+        encryptor = Encryptor.negotiateKeysServerSide(input, output);
     }
 
     @Override
