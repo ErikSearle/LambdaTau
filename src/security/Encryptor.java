@@ -96,11 +96,18 @@ public class Encryptor {
     }
 
     public char[] encrypt(char[] message){
+        for(int i=0; i<message.length-4; i+=4){
+            char[] toEncrypt = Arrays.copyOfRange(message, i, i+4);
+            char[] encrypted = TypeConverter.intToCharArray((int)key^TypeConverter.charArrayToInt(toEncrypt));
+            for(int j=0; j<4; j++){
+                message[i+j] = encrypted[j];
+            }
+        }
         return message;
     }
 
     public char[] decrypt(char[] message){
-        return message;
+        return encrypt(message);
     }
 
     private static int[] primeNumberGenerator(){
