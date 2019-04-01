@@ -26,7 +26,7 @@ public class Client{
         socket = new Socket(InetAddress.getLocalHost(), port);
         input = new InputStreamReader(socket.getInputStream());
         output = new OutputStreamWriter(socket.getOutputStream());
-        encryptor = Encryptor.negotiateKeys(input, output);
+        encryptor = Encryptor.negotiateKeysClientSide(input, output);
     }
 
     /**
