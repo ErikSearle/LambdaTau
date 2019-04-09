@@ -2,6 +2,7 @@ package UsefulTools;
 
 public class Message {
     private int senderID;
+    private String sender;
     private String receiver;
     private boolean slashCommand; //inside application
     private boolean sysInfo;      //for connection returning pass/fails
@@ -12,6 +13,7 @@ public class Message {
     private String original;
 
     public Message(String raw) {
+        sender = "";
         original = raw;
         if (raw.charAt(0) == '/') {
             int pos = raw.indexOf(" ");
@@ -42,7 +44,7 @@ public class Message {
                 } else if (privCommandType.equals("name:")) {
                     receiver = raw.replace(privCommandType, "");
                 }
-            } else message = raw.substring(pos);
+            } else message = raw.substring(pos - 1);
         }
     }
 
@@ -52,6 +54,7 @@ public class Message {
     }
 
     public Message() {
+        sender = "";
         original = null;
         senderID = -5;
         receiver = null;
@@ -68,6 +71,14 @@ public class Message {
 
     public void setSenderID(int senderID) {
         this.senderID = senderID;
+    }
+
+    public String getSender() {
+        return sender;
+    }
+
+    public void setSender(String sender) {
+        this.sender = sender;
     }
 
     public String getReceiver() {
@@ -122,8 +133,12 @@ public class Message {
         return message;
     }
 
-    public char[] getMessageChars() {
-        return message.toCharArray();
+    public char[] getMessageChars(boolean prefix) { //boolean decides if there will be a name prefixed
+        String toSend;
+        if (prefix) {
+            toSend = sender + ": " + message;
+        } else toSend = message;
+        return toSend.toCharArray();
     }
 
     public void setMessage(String message) {

@@ -33,17 +33,13 @@ public class Connection implements Runnable {
         send(threadID);
     }
 
-    static void sendAll(char[] message) throws IOException {
-        String manipulate = new String(message);
-        int pos = manipulate.indexOf(" ");
-        int id;
-        String remove = manipulate.substring(0, pos);
-        id = Integer.parseInt(remove);
-        manipulate = manipulate.replace(id + "", allNames.get(id) + ":");
-        message = manipulate.toCharArray();
+    static void sendAll(Message message) throws IOException {
+        int id = message.getSenderID();
+        message.setSender(allNames.get(id));
+        char[] data = message.getMessageChars(true);
         for (Connection allConnection : allConnections) {
             if (allConnection != null && allConnection.threadID != id) {
-                allConnection.send(Arrays.copyOf(message, message.length));
+                allConnection.send(Arrays.copyOf(data, data.length));
             }
         }
     }
@@ -59,12 +55,12 @@ public class Connection implements Runnable {
                     Message message = new Message(decryptedMessage);
                     if (message.isPrivCommand()) {
                         try {
-                            parseInfo(message);
+                            parseCommand(message);
                         } catch (IOException e) {
                             System.out.println("failed to parse message");
                         }
                     } else {
-                        sendAll(decryptedMessage);
+                        sendAll(message);
                     }
                     if (decryptedMessage.length == 0 && decryptedMessage[0] == 26) {
                         socketOpen = false;
@@ -122,7 +118,7 @@ public class Connection implements Runnable {
         allNames.set(threadID, null);
     }
 
-    private void parseInfo(Message info) throws IOException { // **&**!^&@ is the magic startframe lmao
+    private void parseCommand(Message info) throws IOException { // **&**!^&@ is the magic startframe lmao
         String command = info.getPrivCommandType();
         switch (command) {
             case "name:":
