@@ -1,5 +1,6 @@
 package server;
 
+import UsefulTools.Message;
 import security.Checksum;
 import security.Encryptor;
 
@@ -55,11 +56,12 @@ public class Connection implements Runnable {
                 char[] decryptedMessage = receive();
                 if (decryptedMessage != null) {
                     int checksum = Checksum.calculateCheckSum(decryptedMessage);
-                    if (new String(decryptedMessage).contains("**&**!^&@")) {
+                    Message message = new Message(decryptedMessage);
+                    if (message.isPrivCommand()) {
                         try {
-                            parseInfo(decryptedMessage);
+                            parseInfo(message);
                         } catch (IOException e) {
-
+                            System.out.println("failed to parse message");
                         }
                     } else {
                         sendAll(decryptedMessage);
@@ -120,45 +122,31 @@ public class Connection implements Runnable {
         allNames.set(threadID, null);
     }
 
-    private void parseInfo(char[] msg) throws IOException {
-        String raw = new String(msg);           // **&**!^&@ is the magic startframe lmao
-        int id;
-        int pos = raw.indexOf(" ");
-        String value = raw.substring(0, pos);
-        id = Integer.parseInt(value);
-        raw = raw.replace(value + " ", "");
-        pos = raw.indexOf(":");
-        String info = "";
-        String remove = raw.substring(0, pos + 1);
-        info = raw.replace(remove, "");
-        raw = raw.replace(info, "");
-        switch (raw) {
-            case "**&**!^&@name:":
-                info = info.replace(" ", "_");
-                allNames.set(threadID, info);
-                String message = "Name is set to: " + info;
-                send(message.toCharArray(), id);
+    private void parseInfo(Message info) throws IOException { // **&**!^&@ is the magic startframe lmao
+        String command = info.getPrivCommandType();
+        switch (command) {
+            case "name:":
+                allNames.set(threadID, info.getReceiver());
+                String message = "Name is set to: " + info.getReceiver();
+                send(message.toCharArray(), info.getSenderID());
                 break;
-            case "**&**!^&@pmsg:":
-                int space = info.indexOf(" ");
-                String data = "";
-                data = info.substring(space);
-                String name = info.substring(0, space);
-                if (allNames.contains(name)) {
-                    int receiver = allNames.indexOf(name);
-                    String sender = allNames.get(id);
-                    String toSend = sender + " whispers: " + data;
+            case "pmsg:":
+                int senderID = info.getSenderID();
+                if (allNames.contains(info.getReceiver())) {
+                    int receiver = allNames.indexOf(info.getReceiver());
+                    String sender = allNames.get(senderID);
+                    String toSend = sender + " whispers:" + info.getMessage();
                     send(toSend.toCharArray(), receiver);
                 } else {
-                    String error = name + " is offline or not found";
-                    send(error.toCharArray(), id);
+                    String error = info.getReceiver() + " is offline or not found";
+                    send(error.toCharArray(), senderID);
                 }
                 break;
-            case "**&**!^&@online:":
+            case "online:":
                 String online = allNames.toString();
                 online = online.replace("[", "");
                 online = online.replace("]", "");
-                send(online.toCharArray(), id);
+                send(online.toCharArray(), info.getSenderID());
                 break;
         }
     }
