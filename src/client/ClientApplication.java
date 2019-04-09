@@ -50,7 +50,7 @@ public class ClientApplication {
                 }
             } catch (IOException e) {
                 e.printStackTrace();
-                System.out.println("read error");
+                System.out.println("Error reading message");
             }
 
             if (!readString.isEmpty() && readString.charAt(0) == '/') {
@@ -59,7 +59,6 @@ public class ClientApplication {
             } else if (!readString.isEmpty()) {
                 String message = myName + ": " + readString;
                 try {
-                    System.out.println("send");
                     myClient.send(message);
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -76,6 +75,11 @@ public class ClientApplication {
             }
         }
         System.out.println("Disconnected");
+        try {
+            myClient.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void handleStringCommands(String s) {
@@ -102,7 +106,7 @@ public class ClientApplication {
                 break;
             }
             default: {
-                System.out.println("Invalid Command, try /help for more details");
+                System.out.println("Invalid Command, type /help for more details");
             }
         }
     }

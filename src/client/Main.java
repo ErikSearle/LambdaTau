@@ -6,12 +6,11 @@ import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
-        ClientApplication client;
+        ClientApplication client = null;
         switch (args.length) {
             case 1: {
                 try {
                     client = new ClientApplication(Integer.valueOf(args[0]));
-                    client.start();
                 } catch (NumberFormatException a) {
                     System.out.println("Not a valid Argument");
                     System.exit(0);
@@ -46,15 +45,56 @@ public class Main {
                     }
                 }
                 client = new ClientApplication(address, port);
-                client.start();
+
             }
             break;
             default: {
-                client = new ClientApplication(8080);
-                client.start();
+                int port = -1;
+                InetAddress address = null;
+                boolean getInfo = true;
+                System.out.println("No IP or port information found");
+                while (getInfo) {
+                    System.out.println("Please type desired IP or host name, 0 if localhost");
+                    Scanner scanner = new Scanner(System.in);
+                    String ip = scanner.next();
+                    System.out.println("Please type desired port, 0 if default (8080)");
+                    String portString = scanner.next();
+                    try {
+                        port = Integer.valueOf(portString);
+                    } catch (NumberFormatException a) {
+                        System.out.println("Not a valid port");
+                        port = -1;
+                    }
+                    if (ip.charAt(0) == '0' && port != 0) {
+                        client = new ClientApplication(port);
+                        getInfo = false;
+
+                    } else if (ip.charAt(0) == '0' && port == 0) {
+                        client = new ClientApplication(8080);
+                        getInfo = false;
+                    } else if (Character.isDigit(ip.charAt(0)) && port > 0) {
+                        try {
+                            address = InetAddress.getByAddress(stringToByte(ip));
+                            client = new ClientApplication(address, port);
+                            getInfo = false;
+                        } catch (UnknownHostException e) {
+                        }
+                    } else {
+                        if (Character.isAlphabetic(ip.charAt(0)) && port > 0) {
+                            try {
+                                address = InetAddress.getByName(ip);
+                                client = new ClientApplication(address, port);
+                                getInfo = false;
+                            } catch (UnknownHostException e) {
+                                e.printStackTrace();
+                                System.out.println("Invalid host");
+                            }
+                        }
+                    }
+                }
             }
         }
-
+        client.start();
     }
 
     private static byte[] stringToByte(String s) {
@@ -65,11 +105,9 @@ public class Main {
             for (int i = 0; i <= ipNumMax; i++) {
                 array[i] = scanner.nextByte();
             }
-        }
-        catch(ArrayIndexOutOfBoundsException e){
+        } catch (ArrayIndexOutOfBoundsException e) {
             e.printStackTrace();
             System.out.println("Invalid IP address");
-            System.exit(0);
         }
         return array;
     }
