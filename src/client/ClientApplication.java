@@ -1,5 +1,7 @@
 package client;
 
+import UsefulTools.Message;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -41,29 +43,29 @@ public class ClientApplication {
 
     public void start() {
         System.out.println("Connected!");
-        String readString = "";
+        Message message = new Message();
         while (running) {
             try {                                   //reading console
                 if (reader.ready()) {
-                    readString = reader.readLine();
+                    String temp = myClient.ID + " " + reader.readLine();
+                    message = new Message(temp);
                 }
             } catch (IOException e) {
                 e.printStackTrace();
                 System.out.println("Error reading message");
             }
 
-            if (!readString.isEmpty() && readString.charAt(0) == '/') { //checking if it's a command
-                handleStringCommands(readString);
-                readString = "";
-            } else if (!readString.isEmpty()) { //not a command, but not empty so send message
-                String message = myClient.ID + " " + readString;
+            if (!message.isEmpty() && message.isSlashCommand()) { //checking if it's a command
+                handleStringCommands(message);
+                message = new Message();
+            } else if (!message.isEmpty()) { //not a command, but not empty so send message
                 try {
-                    myClient.send(message);
+                    myClient.send(message.getIDMessage());
                 } catch (IOException e) {
                     e.printStackTrace();
                     System.out.println("Send Message Failed");
                 }
-                readString = "";
+                message = new Message();
             }
             try {
                 if (myClient.ready()) { //if the client has data then grab and print
@@ -81,25 +83,24 @@ public class ClientApplication {
         }
     }
 
-    private void handleStringCommands(String s) {
-        String pMessage = "";
-        if (s.startsWith("/msg")) { //peeling the name off the command so the switch works
-            int spacePos = s.indexOf(" ");
-            pMessage = s.substring(spacePos + 1);
-            s = s.substring(0, spacePos);
-        }
-        switch (s) {
+    private void handleStringCommands(Message data) {
+        switch (data.getSlashCommandType()) {
             case "/help": {
                 System.out.println("Commands are:");
                 System.out.println("/quit to quit");
                 System.out.println("/uptime to show current connected session time");
-                System.out.println("/rename to change current name");
+                System.out.println("/rename to start name change routine");
                 System.out.println("/msg +username then message to private message");
                 System.out.println("/online to see all online users");
                 break;
             }
             case "/quit": {
                 running = false;
+                try {
+                    myClient.send(data.generatePrivCommand());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 break;
             }
             case "/rename": {
@@ -114,7 +115,7 @@ public class ClientApplication {
             }
             case "/online": {
                 try {
-                    myClient.send(myClient.ID + " **&**!^&@online:");
+                    myClient.send(data.generatePrivCommand());
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -122,7 +123,7 @@ public class ClientApplication {
             }
             case "/msg": {
                 try {
-                    myClient.send(myClient.ID + " **&**!^&@pmsg:" + pMessage);
+                    myClient.send(data.generatePrivCommand());
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

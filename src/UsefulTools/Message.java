@@ -11,42 +11,55 @@ public class Message {
     private String privCommandType;
     private String message;
     private String original;
+    private boolean empty;
 
     public Message(String raw) {
-        sender = "";
-        original = raw;
-        if (raw.charAt(0) == '/') {
-            int pos = raw.indexOf(" ");
-            slashCommandType = raw.substring(0, pos);
-            slashCommand = true;
-            privCommand = false;
-        } else {
+        if (raw.isEmpty())
+            empty = true;
+        else {
+            empty = false;
+            sender = "";
+            original = raw;
             int pos = raw.indexOf(" ");
             String value = raw.substring(0, pos);
             senderID = Integer.parseInt(value);
             raw = raw.replace(value + " ", "");
-            if (raw.contains("**&**!^&@")) {
-                privCommand = true;
-                slashCommand = false;
-                raw = raw.replace("**&**!^&@", "");
-                pos = raw.indexOf(":");
-                privCommandType = raw.substring(0, pos + 1);
-                if (privCommandType.equals("pmsg:")) {
-                    raw = raw.replace(privCommandType, "");
-                    pos = raw.indexOf(" ");
-                    if (pos > -1) {
-                        receiver = raw.substring(0, pos);
-                        message = raw.replace(receiver, "");
-                    } else {
-                        receiver = raw;
-                        message = "";
-                    }
-                } else if (privCommandType.equals("name:")) {
-                    receiver = raw.replace(privCommandType, "");
+            if (raw.charAt(0) == '/') {
+                pos = raw.indexOf(" ");
+                if (pos < 0) {
+                    slashCommandType = raw;
+                } else {
+                    slashCommandType = raw.substring(0, pos);
+                    message = raw.substring(pos + 1);
+                    System.out.println(message);
                 }
-            } else message = raw.substring(pos - 1);
+                slashCommand = true;
+                privCommand = false;
+            } else {
+                if (raw.contains("**&**!^&@")) {
+                    privCommand = true;
+                    slashCommand = false;
+                    raw = raw.replace("**&**!^&@", "");
+                    pos = raw.indexOf(":");
+                    privCommandType = raw.substring(0, pos + 1);
+                    if (privCommandType.equals("pmsg:")) {
+                        raw = raw.replace(privCommandType, "");
+                        pos = raw.indexOf(" ");
+                        if (pos > -1) {
+                            receiver = raw.substring(0, pos);
+                            message = raw.replace(receiver, "");
+                        } else {
+                            receiver = raw;
+                            message = "";
+                        }
+                    } else if (privCommandType.equals("name:")) {
+                        receiver = raw.replace(privCommandType, "");
+                    }
+                } else message = raw;
+            }
         }
     }
+
 
     public Message(char[] chars) {
         this(new String(chars));
@@ -54,6 +67,7 @@ public class Message {
     }
 
     public Message() {
+        empty = true;
         sender = "";
         original = null;
         senderID = -5;
@@ -63,6 +77,25 @@ public class Message {
         privCommand = false;
         slashCommandType = null;
         message = null;
+    }
+
+    public String generatePrivCommand() {
+        String returnVal = "";
+        switch (slashCommandType) {
+            case "/msg":
+                returnVal = senderID + " **&**!^&@pmsg:" + message;
+                break;
+            case "/online":
+                returnVal = senderID + " **&**!^&@online:";
+                break;
+            case "/quit":
+                returnVal = senderID + " **&**!^&@quit:";
+        }
+        return returnVal;
+    }
+
+    public boolean isEmpty() {
+        return empty;
     }
 
     public int getSenderID() {
@@ -133,16 +166,21 @@ public class Message {
         return message;
     }
 
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public char[] getIDMessage() {
+        String temp = senderID + " " + message;
+        return temp.toCharArray();
+    }
+
     public char[] getMessageChars(boolean prefix) { //boolean decides if there will be a name prefixed
         String toSend;
         if (prefix) {
             toSend = sender + ": " + message;
         } else toSend = message;
         return toSend.toCharArray();
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
     }
 
     public String getOriginal() {

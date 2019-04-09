@@ -55,7 +55,7 @@ public class Connection implements Runnable {
                     Message message = new Message(decryptedMessage);
                     if (message.isPrivCommand()) {
                         try {
-                            parseCommand(message);
+                            parseInfo(message);
                         } catch (IOException e) {
                             System.out.println("failed to parse message");
                         }
@@ -111,14 +111,14 @@ public class Connection implements Runnable {
     }
 
     private void close() throws IOException {
-        input.close();
-        output.close();
-        socket.close();
+        //input.close();
+        // output.close();
+        //socket.close();
         allConnections.set(threadID, null);
         allNames.set(threadID, null);
     }
 
-    private void parseCommand(Message info) throws IOException { // **&**!^&@ is the magic startframe lmao
+    private void parseInfo(Message info) throws IOException { // **&**!^&@ is the magic startframe lmao
         String command = info.getPrivCommandType();
         switch (command) {
             case "name:":
@@ -138,12 +138,15 @@ public class Connection implements Runnable {
                     send(error.toCharArray(), senderID);
                 }
                 break;
-            case "online:":
+            case "online:": {
                 String online = allNames.toString();
                 online = online.replace("[", "");
                 online = online.replace("]", "");
                 send(online.toCharArray(), info.getSenderID());
                 break;
+            }
+            case "quit:":
+                this.close();
         }
     }
 }
