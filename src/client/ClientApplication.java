@@ -53,10 +53,10 @@ public class ClientApplication {
                 System.out.println("Error reading message");
             }
 
-            if (!readString.isEmpty() && readString.charAt(0) == '/') {
+            if (!readString.isEmpty() && readString.charAt(0) == '/') { //checking if it's a command
                 handleStringCommands(readString);
                 readString = "";
-            } else if (!readString.isEmpty()) {
+            } else if (!readString.isEmpty()) { //not a command, but not empty so send message
                 String message = myName + ": " + readString;
                 try {
                     myClient.send(message);
@@ -67,7 +67,7 @@ public class ClientApplication {
                 readString = "";
             }
             try {
-                if (myClient.ready()) {
+                if (myClient.ready()) { //if the client has data then grab and print
                     System.out.println(myClient.receive());
                 }
             } catch (IOException e) {
@@ -83,12 +83,20 @@ public class ClientApplication {
     }
 
     private void handleStringCommands(String s) {
+        s = s.toLowerCase();
+        String name = "";
+        if (s.startsWith("/msg")) { //peeling the name off the command so the switch works
+            name = s.substring(5);
+            s = s.substring(0, 4);
+        }
         switch (s) {
             case "/help": {
                 System.out.println("Commands are:");
                 System.out.println("/quit to quit");
                 System.out.println("/uptime to show current connected session time");
                 System.out.println("/rename to change current name");
+                System.out.println("/msg +username to private message");
+                System.out.println("/online to see all online users");
                 break;
             }
             case "/quit": {
@@ -103,6 +111,14 @@ public class ClientApplication {
                 long currentTime = System.currentTimeMillis() / 60000;
                 long sessionTime = currentTime - startTime;
                 System.out.println("This session time length is: " + sessionTime + " minutes");
+                break;
+            }
+            case "/online": {
+                System.out.println("not implemented yet");
+                break;
+            }
+            case "/msg": {
+                System.out.println("not implemented yet msg attempt to: " + name);
                 break;
             }
             default: {
