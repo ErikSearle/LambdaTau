@@ -37,7 +37,7 @@ public class Connection implements Runnable {
                 char[] decryptedMessage = receive();
                 if (decryptedMessage != null) {
                     int checksum = Checksum.calculateCheckSum(decryptedMessage);
-                    send(decryptedMessage);
+                    sendAll(decryptedMessage);
                     if (decryptedMessage.length == 0 && decryptedMessage[0] == 26) {
                         socketOpen = false;
                     }
@@ -57,10 +57,13 @@ public class Connection implements Runnable {
      * @throws IOException Unable to send message
      */
     private void send(char[] message) throws IOException {
+                output.write(encryptor.encrypt(message), 0, message.length);
+                output.flush();
+    }
+    private void sendAll(char[] message) throws IOException {
         for (Connection allConnection : allConnections) {
             if (allConnection != null) {
-                allConnection.output.write(encryptor.encrypt(message), 0, message.length);
-                allConnection.output.flush();
+                allConnection.send(message);
             }
         }
     }
