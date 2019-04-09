@@ -14,11 +14,11 @@ public class Connection implements Runnable {
 
     private static ArrayList<Connection> allConnections = new ArrayList<>();
     private static int threadIDCounter = 0;
-    private final int threadID;
     private Socket socket;
     private InputStreamReader input;
     private OutputStreamWriter output;
     private Encryptor encryptor;
+    private final int threadID;
 
     public Connection(Socket socket) throws IOException {
         this.socket = socket;
@@ -52,7 +52,6 @@ public class Connection implements Runnable {
 
     /**
      * Encrypts message before sending across open connection
-     *
      * @param message Message to send
      * @throws IOException Unable to send message
      */
@@ -64,7 +63,7 @@ public class Connection implements Runnable {
     private void sendAll(char[] message) throws IOException {
         for (Connection allConnection : allConnections) {
             if (allConnection != null) {
-                allConnection.send(message);
+                allConnection.send(Arrays.copyOf(message, message.length));
             }
         }
     }
@@ -77,7 +76,6 @@ public class Connection implements Runnable {
 
     /**
      * Receives, decrypts, and returns the next message from the open socket up to a size of 1000 bytes
-     *
      * @return The decrypted message
      * @throws IOException Unable to receive message
      */
