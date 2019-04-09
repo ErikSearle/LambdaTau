@@ -82,4 +82,7 @@ public class Client{
         output.close();
         socket.close();
     }
+    public boolean ready() throws IOException {
+        return input.ready();
+    }
 }
