@@ -41,7 +41,6 @@ public class ClientApplication {
 
     public void start() {
         System.out.println("Connected!");
-        System.out.println("Welcome to the server " + myName);
         String readString = "";
         while (running) {
             try {                                   //reading console
@@ -57,7 +56,7 @@ public class ClientApplication {
                 handleStringCommands(readString);
                 readString = "";
             } else if (!readString.isEmpty()) { //not a command, but not empty so send message
-                String message = myName + ": " + readString;
+                String message = myClient.ID + " " + readString;
                 try {
                     myClient.send(message);
                 } catch (IOException e) {
@@ -83,11 +82,11 @@ public class ClientApplication {
     }
 
     private void handleStringCommands(String s) {
-        s = s.toLowerCase();
-        String name = "";
+        String pMessage = "";
         if (s.startsWith("/msg")) { //peeling the name off the command so the switch works
-            name = s.substring(5);
-            s = s.substring(0, 4);
+            int spacePos = s.indexOf(" ");
+            pMessage = s.substring(spacePos + 1);
+            s = s.substring(0, spacePos);
         }
         switch (s) {
             case "/help": {
@@ -95,7 +94,7 @@ public class ClientApplication {
                 System.out.println("/quit to quit");
                 System.out.println("/uptime to show current connected session time");
                 System.out.println("/rename to change current name");
-                System.out.println("/msg +username to private message");
+                System.out.println("/msg +username then message to private message");
                 System.out.println("/online to see all online users");
                 break;
             }
@@ -114,11 +113,19 @@ public class ClientApplication {
                 break;
             }
             case "/online": {
-                System.out.println("not implemented yet");
+                try {
+                    myClient.send(myClient.ID + " **&**!^&@online:");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 break;
             }
             case "/msg": {
-                System.out.println("not implemented yet msg attempt to: " + name);
+                try {
+                    myClient.send(myClient.ID + " **&**!^&@pmsg:" + pMessage);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 break;
             }
             default: {
@@ -132,6 +139,11 @@ public class ClientApplication {
         try {
             while (!reader.ready()) ;
             myName = reader.readLine();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            myClient.send(myClient.ID + " **&**!^&@name:" + myName);
         } catch (IOException e) {
             e.printStackTrace();
         }

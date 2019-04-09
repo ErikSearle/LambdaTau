@@ -9,7 +9,7 @@ public class Server {
     private ServerSocket socket;
 
     public Server(int port) throws IOException{
-        socket = new ServerSocket(8080);
+        socket = new ServerSocket(port);
     }
 
     public void acceptConnections() throws IOException{
