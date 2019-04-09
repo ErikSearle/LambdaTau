@@ -28,7 +28,7 @@ public class Connection implements Runnable {
         encryptor = Encryptor.negotiateKeysServerSide(input, output);
         this.threadID = threadIDCounter++;
         allConnections.add(this);
-        allNames.add("blank");
+        allNames.add("default");
         send(threadID);
     }
 
