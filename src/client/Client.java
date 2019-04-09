@@ -57,7 +57,10 @@ public class Client{
      * @throws IOException Unable to send message
      */
     public void send(char[] message) throws IOException{
-        output.write(encryptor.encrypt(message), 0, message.length);
+        String encrypted = new String(encryptor.encrypt(message));
+        output.write(encrypted, 0, message.length);
+        System.out.println("internal send");
+        System.out.println("encrypted: " + encrypted);
         output.flush();
     }
 
@@ -81,5 +84,8 @@ public class Client{
         input.close();
         output.close();
         socket.close();
+    }
+    public boolean ready() throws IOException {
+        return input.ready();
     }
 }
