@@ -13,14 +13,15 @@ import java.util.Arrays;
 
 public class Connection implements Runnable {
 
-    private static ArrayList<Connection> allConnections = new ArrayList<>();
-    private static ArrayList<String> allNames = new ArrayList<>();
+
     private static int threadIDCounter = 0;
     final int threadID;
     private Socket socket;
     private InputStreamReader input;
     private OutputStreamWriter output;
     private Encryptor encryptor;
+    private final int threadID;
+    private static ArrayList<Connection> connections = Server.allConnections;
 
     public Connection(Socket socket) throws IOException {
         this.socket = socket;
@@ -28,20 +29,9 @@ public class Connection implements Runnable {
         output = new OutputStreamWriter(this.socket.getOutputStream());
         encryptor = Encryptor.negotiateKeysServerSide(input, output);
         this.threadID = threadIDCounter++;
-        allConnections.add(this);
+        connections.add(this);
         allNames.add("default");
         send(threadID); //informs client of it's ID
-    }
-
-    static void sendAll(Message message) throws IOException {
-        int id = message.getSenderID();
-        message.setSender(allNames.get(id));
-        char[] data = message.getMessageChars(true);
-        for (Connection allConnection : allConnections) {
-            if (allConnection != null && allConnection.threadID != id) {
-                allConnection.send(Arrays.copyOf(data, data.length));
-            }
-        }
     }
 
     @Override
@@ -52,6 +42,7 @@ public class Connection implements Runnable {
                 char[] decryptedMessage = receive();
                 if (decryptedMessage != null) {
                     int checksum = Checksum.calculateCheckSum(decryptedMessage);
+                    Server.sendAll(decryptedMessage);
                     Message message = new Message(decryptedMessage);
                     if (message.isPrivCommand()) {
                         try {
@@ -80,7 +71,7 @@ public class Connection implements Runnable {
      * @param message Message to send
      * @throws IOException Unable to send message
      */
-    private void send(char[] message) throws IOException {
+    void send(char[] message) throws IOException {
         output.write(encryptor.encrypt(message), 0, message.length);
         output.flush();
     }
