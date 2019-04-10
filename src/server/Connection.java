@@ -27,13 +27,13 @@ public class Connection implements Runnable {
         input = new InputStreamReader(this.socket.getInputStream());
         output = new OutputStreamWriter(this.socket.getOutputStream());
         encryptor = Encryptor.negotiateKeysServerSide(input, output);
+        queue = new PriorityQueue();
         this.threadID = threadIDCounter++;
-        //allNames.add("default");
         send(threadID); //informs client of it's ID
     }
 
-    static void setQueue(PriorityQueue q) {
-        queue = q;
+    static PriorityQueue getQueue() {
+        return queue;
     }
 
     @Override

@@ -22,8 +22,6 @@ public class Server {
         allNames = new ArrayList<>();
         socket = new ServerSocketListener(port);
         socketThread = new Thread(socket);
-
-        Connection.setQueue(messageQueue);
     }
 
     public void start() {
@@ -33,8 +31,12 @@ public class Server {
         socketThread.start();
         System.out.println("started");
         while (online) {
+            updateQueue();
             if (allNames.size() > 1) {
                 System.out.println(allNames);
+            }
+            if (messageQueue.size() > 0) {
+                System.out.println("thick");
             }
         }
     }
@@ -70,6 +72,11 @@ public class Server {
     public void clientDisconnect(int threadID) {
         allConnections.set(threadID, null);
         allNames.set(threadID, null);
+    }
+
+    private void updateQueue() {
+        PriorityQueue q = Connection.getQueue();
+        messageQueue.addAll(q);
     }
 
 
