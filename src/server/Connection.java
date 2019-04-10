@@ -12,13 +12,14 @@ import java.util.Arrays;
 
 public class Connection implements Runnable {
 
-    private static ArrayList<Connection> allConnections = new ArrayList<>();
+
     private static int threadIDCounter = 0;
     private Socket socket;
     private InputStreamReader input;
     private OutputStreamWriter output;
     private Encryptor encryptor;
     private final int threadID;
+    private static ArrayList<Connection> connections = Server.allConnections;
 
     public Connection(Socket socket) throws IOException {
         this.socket = socket;
@@ -26,7 +27,6 @@ public class Connection implements Runnable {
         output = new OutputStreamWriter(this.socket.getOutputStream());
         encryptor = Encryptor.negotiateKeysServerSide(input, output);
         this.threadID = threadIDCounter++;
-        allConnections.add(this);
     }
 
     @Override
@@ -37,7 +37,7 @@ public class Connection implements Runnable {
                 char[] decryptedMessage = receive();
                 if (decryptedMessage != null) {
                     int checksum = Checksum.calculateCheckSum(decryptedMessage);
-                    sendAll(decryptedMessage);
+                    Server.sendAll(decryptedMessage);
                     if (decryptedMessage.length == 0 && decryptedMessage[0] == 26) {
                         socketOpen = false;
                     }
@@ -52,20 +52,13 @@ public class Connection implements Runnable {
 
     /**
      * Encrypts message before sending across open connection
+     *
      * @param message Message to send
      * @throws IOException Unable to send message
      */
-    private void send(char[] message) throws IOException {
+    void send(char[] message) throws IOException {
         output.write(encryptor.encrypt(message), 0, message.length);
         output.flush();
-    }
-
-    private void sendAll(char[] message) throws IOException {
-        for (Connection allConnection : allConnections) {
-            if (allConnection != null) {
-                allConnection.send(Arrays.copyOf(message, message.length));
-            }
-        }
     }
 
     private void send(int i) throws IOException {
@@ -76,6 +69,7 @@ public class Connection implements Runnable {
 
     /**
      * Receives, decrypts, and returns the next message from the open socket up to a size of 1000 bytes
+     *
      * @return The decrypted message
      * @throws IOException Unable to receive message
      */
@@ -91,6 +85,6 @@ public class Connection implements Runnable {
         input.close();
         output.close();
         socket.close();
-        allConnections.set(threadID, null);
+        connections.set(threadID, null);
     }
 }
