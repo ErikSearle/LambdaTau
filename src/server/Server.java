@@ -1,6 +1,8 @@
 package server;
 
 
+import UsefulTools.Message;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.ArrayList;
@@ -10,15 +12,19 @@ public class Server {
 
     private ServerSocket socket;
     static ArrayList<Connection> allConnections = new ArrayList<>();
+    static ArrayList<String> allNames = new ArrayList<>();
 
     public Server(int port) throws IOException {
         socket = new ServerSocket(port);
     }
 
-    static void sendAll(char[] message) throws IOException {
+    static void sendAll(Message message) throws IOException {
+        int id = message.getSenderID();
+        message.setSender(allNames.get(id));
+        char[] data = message.getMessageChars(true);
         for (Connection allConnection : allConnections) {
-            if (allConnection != null) {
-                allConnection.send(Arrays.copyOf(message, message.length));
+            if (allConnection != null && allConnection.threadID != id) {
+                allConnection.send(Arrays.copyOf(data, data.length));
             }
         }
     }

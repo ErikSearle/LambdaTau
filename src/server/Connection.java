@@ -20,8 +20,8 @@ public class Connection implements Runnable {
     private InputStreamReader input;
     private OutputStreamWriter output;
     private Encryptor encryptor;
-    private final int threadID;
-    private static ArrayList<Connection> connections = Server.allConnections;
+    private static ArrayList<Connection> allConnections = Server.allConnections;
+    private static ArrayList<String> allNames = Server.allNames;
 
     public Connection(Socket socket) throws IOException {
         this.socket = socket;
@@ -29,7 +29,6 @@ public class Connection implements Runnable {
         output = new OutputStreamWriter(this.socket.getOutputStream());
         encryptor = Encryptor.negotiateKeysServerSide(input, output);
         this.threadID = threadIDCounter++;
-        connections.add(this);
         allNames.add("default");
         send(threadID); //informs client of it's ID
     }
@@ -42,7 +41,6 @@ public class Connection implements Runnable {
                 char[] decryptedMessage = receive();
                 if (decryptedMessage != null) {
                     int checksum = Checksum.calculateCheckSum(decryptedMessage);
-                    Server.sendAll(decryptedMessage);
                     Message message = new Message(decryptedMessage);
                     if (message.isPrivCommand()) {
                         try {
@@ -51,7 +49,7 @@ public class Connection implements Runnable {
                             System.out.println("failed to parse message");
                         }
                     } else {
-                        sendAll(message);
+                        Server.sendAll(message);
                     }
                     if (decryptedMessage.length == 0 && decryptedMessage[0] == 26) {
                         socketOpen = false;
