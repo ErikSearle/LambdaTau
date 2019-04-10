@@ -1,26 +1,108 @@
 package server;
 
 
+import UsefulTools.Message;
+
 import java.io.IOException;
-import java.net.ServerSocket;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.PriorityQueue;
 
 public class Server {
 
-    private ServerSocket socket;
+    private ArrayList<Connection> allConnections;
+    private ArrayList<String> allNames;
+    private PriorityQueue<Message> messageQueue = new PriorityQueue<>();
+    private ServerSocketListener socket;
+    private boolean online;
+    private Thread socketThread;
 
     public Server(int port) throws IOException{
-        socket = new ServerSocket(port);
+        allConnections = new ArrayList<>();
+        allNames = new ArrayList<>();
+        socket = new ServerSocketListener(port);
+        socketThread = new Thread(socket);
+
+        Connection.setQueue(messageQueue);
     }
 
-    public void acceptConnections() throws IOException{
-        while(!socket.isClosed()){
-            Connection connection = new Connection(socket.accept());
-            Thread thread = new Thread(connection);
-            thread.start();
+    public void start() {
+        online = true;
+        socket.setConnectionList(allConnections);
+        socket.setNameList(allNames);
+        socketThread.start();
+        System.out.println("started");
+        while (online) {
+            if (allNames.size() > 1) {
+                System.out.println(allNames);
+            }
         }
     }
 
-    public void close() throws IOException{
-        socket.close();
+    /*
+                        if (message.isPrivCommand()) {
+                        try {
+                            parseInfo(message);
+                        } catch (IOException e) {
+                            System.out.println("failed to parse message");
+                        }
+                    } else {
+                        sendAll(message);
+                    }
+     */
+
+    void sendAll(Message message) throws IOException {
+        int id = message.getSenderID();
+        message.setSender(allNames.get(id));
+        char[] data = message.getMessageChars(true);
+        for (Connection allConnection : allConnections) {
+            if (allConnection != null && allConnection.threadID != id) {
+                allConnection.send(Arrays.copyOf(data, data.length));
+            }
+        }
     }
+
+    private void send(char[] message, int threadNum) throws IOException {
+        Connection target = allConnections.get(threadNum);
+        target.send(message);
+    }
+
+    public void clientDisconnect(int threadID) {
+        allConnections.set(threadID, null);
+        allNames.set(threadID, null);
+    }
+
+
+    //TODO fix this entirely
+    /*private void parseInfo(Message info) throws IOException { // **&**!^&@ is the magic startframe lmao
+        String command = info.getPrivCommandType();
+        switch (command) {
+            case "name:":
+                allNames.set(threadID, info.getReceiver());
+                String message = "Name is set to: " + info.getReceiver();
+                send(message.toCharArray(), info.getSenderID());
+                break;
+            case "pmsg:":
+                int senderID = info.getSenderID();
+                if (allNames.contains(info.getReceiver())) {
+                    int receiver = allNames.indexOf(info.getReceiver());
+                    String sender = allNames.get(senderID);
+                    String toSend = sender + " whispers:" + info.getMessage();
+                    send(toSend.toCharArray(), receiver);
+                } else {
+                    String error = info.getReceiver() + " is offline or not found";
+                    send(error.toCharArray(), senderID);
+                }
+                break;
+            case "online:": {
+                String online = allNames.toString();
+                online = online.replace("[", "");
+                online = online.replace("]", "");
+                send(online.toCharArray(), info.getSenderID());
+                break;
+            }
+            case "quit:":
+                this.close();
+        }
+    }*/
 }

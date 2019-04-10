@@ -1,6 +1,6 @@
 package UsefulTools;
 
-public class Message {
+public class Message implements Comparable<Message> {
     private int senderID;
     private String sender;
     private String receiver;
@@ -190,4 +190,8 @@ public class Message {
         this.original = original;
     }
 
+    @Override
+    public int compareTo(Message message) {
+        return 0;
+    }
 }

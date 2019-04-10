@@ -8,14 +8,14 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.PriorityQueue;
 
 public class Connection implements Runnable {
 
-    private static ArrayList<Connection> allConnections = new ArrayList<>();
-    private static ArrayList<String> allNames = new ArrayList<>();
+
     private static int threadIDCounter = 0;
+    private static PriorityQueue queue;
     final int threadID;
     private Socket socket;
     private InputStreamReader input;
@@ -28,20 +28,12 @@ public class Connection implements Runnable {
         output = new OutputStreamWriter(this.socket.getOutputStream());
         encryptor = Encryptor.negotiateKeysServerSide(input, output);
         this.threadID = threadIDCounter++;
-        allConnections.add(this);
-        allNames.add("default");
+        //allNames.add("default");
         send(threadID); //informs client of it's ID
     }
 
-    static void sendAll(Message message) throws IOException {
-        int id = message.getSenderID();
-        message.setSender(allNames.get(id));
-        char[] data = message.getMessageChars(true);
-        for (Connection allConnection : allConnections) {
-            if (allConnection != null && allConnection.threadID != id) {
-                allConnection.send(Arrays.copyOf(data, data.length));
-            }
-        }
+    static void setQueue(PriorityQueue q) {
+        queue = q;
     }
 
     @Override
@@ -53,15 +45,7 @@ public class Connection implements Runnable {
                 if (decryptedMessage != null) {
                     int checksum = Checksum.calculateCheckSum(decryptedMessage);
                     Message message = new Message(decryptedMessage);
-                    if (message.isPrivCommand()) {
-                        try {
-                            parseInfo(message);
-                        } catch (IOException e) {
-                            System.out.println("failed to parse message");
-                        }
-                    } else {
-                        sendAll(message);
-                    }
+                    queue.add(message);
                     if (decryptedMessage.length == 0 && decryptedMessage[0] == 26) {
                         socketOpen = false;
                     }
@@ -80,20 +64,15 @@ public class Connection implements Runnable {
      * @param message Message to send
      * @throws IOException Unable to send message
      */
-    private void send(char[] message) throws IOException {
+    void send(char[] message) throws IOException {
         output.write(encryptor.encrypt(message), 0, message.length);
         output.flush();
     }
 
-    private void send(int i) throws IOException {
+    void send(int i) throws IOException {
         char[] sendable = new char[1];
         sendable[0] = (char) i;
         send(sendable);
-    }
-
-    private void send(char[] message, int threadNum) throws IOException {
-        Connection target = allConnections.get(threadNum);
-        target.send(message);
     }
 
     /**
@@ -114,39 +93,8 @@ public class Connection implements Runnable {
         //input.close();
         // output.close();  //turns out these close the socket for every thread.
         //socket.close();
-        allConnections.set(threadID, null);
-        allNames.set(threadID, null);
+//TODO need to remove somehow
     }
 
-    private void parseInfo(Message info) throws IOException { // **&**!^&@ is the magic startframe lmao
-        String command = info.getPrivCommandType();
-        switch (command) {
-            case "name:":
-                allNames.set(threadID, info.getReceiver());
-                String message = "Name is set to: " + info.getReceiver();
-                send(message.toCharArray(), info.getSenderID());
-                break;
-            case "pmsg:":
-                int senderID = info.getSenderID();
-                if (allNames.contains(info.getReceiver())) {
-                    int receiver = allNames.indexOf(info.getReceiver());
-                    String sender = allNames.get(senderID);
-                    String toSend = sender + " whispers:" + info.getMessage();
-                    send(toSend.toCharArray(), receiver);
-                } else {
-                    String error = info.getReceiver() + " is offline or not found";
-                    send(error.toCharArray(), senderID);
-                }
-                break;
-            case "online:": {
-                String online = allNames.toString();
-                online = online.replace("[", "");
-                online = online.replace("]", "");
-                send(online.toCharArray(), info.getSenderID());
-                break;
-            }
-            case "quit:":
-                this.close();
-        }
-    }
+
 }
