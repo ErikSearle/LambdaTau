@@ -31,7 +31,6 @@ public class Message {
                 } else {
                     slashCommandType = raw.substring(0, pos);
                     message = raw.substring(pos + 1);
-                    System.out.println(message);
                 }
                 slashCommand = true;
                 privCommand = false;

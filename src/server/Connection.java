@@ -30,7 +30,7 @@ public class Connection implements Runnable {
         this.threadID = threadIDCounter++;
         allConnections.add(this);
         allNames.add("default");
-        send(threadID);
+        send(threadID); //informs client of it's ID
     }
 
     static void sendAll(Message message) throws IOException {
@@ -112,7 +112,7 @@ public class Connection implements Runnable {
 
     private void close() throws IOException {
         //input.close();
-        // output.close();
+        // output.close();  //turns out these close the socket for every thread.
         //socket.close();
         allConnections.set(threadID, null);
         allNames.set(threadID, null);
