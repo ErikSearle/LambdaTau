@@ -95,8 +95,8 @@ public class Server {
                 if (allNames.contains(info.getArguments())) {
                     int receiver = allNames.indexOf(info.getArguments());
                     String sender = allNames.get(senderID);
-                    String toSend = sender + " whispers:" + info.getMessage();
-                    send(toSend.toCharArray(), receiver);
+                    info.addPrefix(sender + "whispers: ");
+                    send(info.toCharArray(), receiver);
                 } else {
                     String error = info.getArguments() + " is offline or not found";
                     send(error.toCharArray(), senderID);
