@@ -162,7 +162,7 @@ public class Message implements Comparable<Message> {
     }
 
     private void parseMessage(String s) {
-        message = s;
+        message = s.trim();
     }
 
     public void toSysCommand() {
@@ -199,5 +199,12 @@ public class Message implements Comparable<Message> {
 
     public boolean isMessage() {
         return messageType == 1;
+    }
+
+
+    @Override
+    public String toString() {
+        rebuildFullMessage();
+        return fullMessage;
     }
 }

@@ -69,13 +69,16 @@ public class ClientApplication {
             }
             try {
                 if (myClient.ready()) { //if the client has data then grab and print
-                    input = Message.newMessageParse(myClient.receive(), myClient.ID);
+                    input = new Message(myClient.receive());
+                    System.out.println("full: " + input);
+                    System.out.println("message:" + input.getMessage());
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
             if (input.isMessage()) {
                 System.out.println(input.getMessage());
+                input = new Message();
             }
         }
         System.out.println("Disconnected");
