@@ -20,7 +20,7 @@ public class Server {
     public Server(int port) throws IOException {
         allConnections = new ArrayList<>();
         allNames = new ArrayList<>();
-        socket = new ServerSocketListener(port, this); //todo write better object communication
+        socket = new ServerSocketListener(port, this); //todo this doesnt work
         socketThread = new Thread(socket);
     }
 
@@ -30,7 +30,7 @@ public class Server {
         System.out.println("started");
         Message current;
         while (online) {
-            if (!messageQueue.isEmpty()) {
+            if (!messageQueue.isEmpty()) { //todo figure out why this won't grab messages
                 System.out.println("grabbed message");
                 current = messageQueue.poll();
                 if (current != null && current.isSystemCommand()) {
