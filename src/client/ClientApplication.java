@@ -47,7 +47,7 @@ public class ClientApplication {
         Message input = new Message();
         while (running) {
             try {                                   //reading console
-                if (reader.ready()) {
+                if (reader.ready()) { //todo empty string crashes this.
                     output = Message.newMessageParse(reader.readLine(), myClient.ID);
                 }
             } catch (IOException e) {
@@ -70,8 +70,6 @@ public class ClientApplication {
             try {
                 if (myClient.ready()) { //if the client has data then grab and print
                     input = new Message(myClient.receive());
-                    System.out.println("full: " + input);
-                    System.out.println("message:" + input.getMessage());
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -150,8 +148,8 @@ public class ClientApplication {
             e.printStackTrace();
         }
         try {
-            nameMessage.toSysCommand();
             nameMessage.setArguments(myName);
+            nameMessage.toSysCommand();
             myClient.send(nameMessage.toCharArray());
         } catch (IOException e) {
             e.printStackTrace();

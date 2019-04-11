@@ -20,7 +20,7 @@ public class Server {
     public Server(int port) throws IOException {
         allConnections = new ArrayList<>();
         allNames = new ArrayList<>();
-        socket = new ServerSocketListener(port, this); //todo this doesnt work
+        socket = new ServerSocketListener(port, this);
         socketThread = new Thread(socket);
     }
 
@@ -30,7 +30,7 @@ public class Server {
         System.out.println("started");
         Message current;
         while (online) {
-            if (!messageQueue.isEmpty()) { //todo figure out why this won't grab messages
+            if (!messageQueue.isEmpty()) {
                 current = messageQueue.poll();
                 if (current != null && current.isSystemCommand()) {
                     try {
@@ -82,13 +82,13 @@ public class Server {
     }
 
 
-    //TODO fix this entirely
+    //TODO fix pmsg and online return messages
     private void executeCommand(Message info) throws IOException {
         int senderID = info.getSenderID();
         switch (info.getCommand()) {
             case "name:":
                 allNames.set(senderID, info.getArguments());
-                String message = "Name is set to: " + info.getArguments();
+                Message message = Message.newMessageParse("Name is set to: " + info.getArguments(), Character.MAX_VALUE);
                 send(message.toCharArray(), senderID);
                 break;
             case "pmsg:":

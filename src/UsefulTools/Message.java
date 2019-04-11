@@ -68,7 +68,7 @@ public class Message implements Comparable<Message> {
     }
 
     public String getMessage() {
-        return message;
+        return message.trim();
     }
 
     public void addPrefix(String s) {
@@ -81,7 +81,7 @@ public class Message implements Comparable<Message> {
     }
 
     public String getArguments() {
-        return arguments;
+        return arguments.trim();
     }
 
     public void setArguments(String s) {
@@ -103,10 +103,12 @@ public class Message implements Comparable<Message> {
     }
 
     private void parseSystem(String s) {
-        String system = s;
+        int pos = s.indexOf(" ");
+        String system = s.substring(0, pos);
         switch (system) {
             case "pmsg:":
-                int pos = system.indexOf(" ");
+                system = s;
+                pos = system.indexOf(" ");
                 String temp = system.substring(0, pos);
                 command = temp;
                 int pos2 = temp.indexOf(" ");
@@ -121,6 +123,7 @@ public class Message implements Comparable<Message> {
                 break;
             case "kick:":
             case "name:":
+                system = s;
                 pos = system.indexOf(" ");
                 temp = system.substring(0, pos);
                 command = temp;
