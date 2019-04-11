@@ -34,9 +34,6 @@ public class Connection implements Runnable {
         send(threadID); //informs client of it's ID
     }
 
-    static PriorityQueue getQueue() {
-        return queue;
-    }
 
     @Override
     public void run() {

@@ -24,7 +24,7 @@ public class ClientApplication {
             System.out.print("Failed to Connect. Exiting...");
             System.exit(0);
         }
-        setName();
+        setName(Message.newMessageParse("/rename", myClient.ID));
     }
 
     public ClientApplication(InetAddress address, int port) {
@@ -38,41 +38,44 @@ public class ClientApplication {
             System.out.print("Failed to Connect. Exiting...");
             System.exit(0);
         }
-        setName();
+        setName(Message.newMessageParse("/name", myClient.ID));
     }
 
     public void start() {
         System.out.println("Connected!");
-        Message message = new Message();
+        Message output = new Message();
+        Message input = new Message();
         while (running) {
             try {                                   //reading console
                 if (reader.ready()) {
-                    String temp = myClient.ID + " " + reader.readLine();
-                    message = new Message(temp);
+                    output = Message.newMessageParse(reader.readLine(), myClient.ID);
                 }
             } catch (IOException e) {
                 e.printStackTrace();
                 System.out.println("Error reading message");
             }
 
-            if (!message.isEmpty() && message.isSlashCommand()) { //checking if it's a command
-                handleStringCommands(message);
-                message = new Message();
-            } else if (!message.isEmpty()) { //not a command, but not empty so send message
+            if (output.isSlashCommand()) { //checking if it's a command
+                handleStringCommands(output);
+                output = new Message();
+            } else if (!output.isEmpty()) { //not a command, but not empty so send message
                 try {
-                    myClient.send(message.getIDMessage());
+                    myClient.send(output.toCharArray());
                 } catch (IOException e) {
                     e.printStackTrace();
                     System.out.println("Send Message Failed");
                 }
-                message = new Message();
+                output = new Message();
             }
             try {
                 if (myClient.ready()) { //if the client has data then grab and print
-                    System.out.println(myClient.receive());
+                    input = Message.newMessageParse(myClient.receive(), myClient.ID);
                 }
             } catch (IOException e) {
                 e.printStackTrace();
+            }
+            if (input.isMessage()) {
+                System.out.println(input.getMessage());
             }
         }
         System.out.println("Disconnected");
@@ -84,7 +87,7 @@ public class ClientApplication {
     }
 
     private void handleStringCommands(Message data) {
-        switch (data.getSlashCommandType()) {
+        switch (data.getCommand()) {
             case "/help": {
                 System.out.println("Commands are:");
                 System.out.println("/quit to quit");
@@ -97,14 +100,14 @@ public class ClientApplication {
             case "/quit": {
                 running = false;
                 try {
-                    myClient.send(data.generatePrivCommand());
+                    myClient.send(data.toCharArray());
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
                 break;
             }
             case "/rename": {
-                setName();
+                setName(data);
                 break;
             }
             case "/uptime": {
@@ -115,7 +118,7 @@ public class ClientApplication {
             }
             case "/online": {
                 try {
-                    myClient.send(data.generatePrivCommand());
+                    myClient.send(data.toCharArray());
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -123,7 +126,7 @@ public class ClientApplication {
             }
             case "/msg": {
                 try {
-                    myClient.send(data.generatePrivCommand());
+                    myClient.send(data.toCharArray());
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -135,7 +138,7 @@ public class ClientApplication {
         }
     }
 
-    private void setName() {
+    private void setName(Message nameMessage) {
         System.out.println("Please input your handle:");
         try {
             while (!reader.ready()) ;
@@ -144,7 +147,9 @@ public class ClientApplication {
             e.printStackTrace();
         }
         try {
-            myClient.send(myClient.ID + " **&**!^&@name:" + myName);
+            nameMessage.toSysCommand();
+            nameMessage.setArguments(myName);
+            myClient.send(nameMessage.toCharArray());
         } catch (IOException e) {
             e.printStackTrace();
         }

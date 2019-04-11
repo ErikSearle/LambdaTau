@@ -28,36 +28,35 @@ public class Server {
         online = true;
         socketThread.start();
         System.out.println("started");
+        Message current;
         while (online) {
-            ;
-            if (allNames.size() > 1) {
-                System.out.println(allNames);
-            }
-            if (messageQueue.size() > 0) {
-                System.out.println("thick");
+            if (!messageQueue.isEmpty()) {
+                System.out.println("grabbed message");
+                current = messageQueue.poll();
+                if (current != null && current.isSystemCommand()) {
+                    try {
+                        executeCommand(current);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                } else if (current != null && current.isMessage()) {
+                    try {
+                        sendAll(current);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
         }
     }
 
-    /*
-                        if (message.isPrivCommand()) {
-                        try {
-                            parseInfo(message);
-                        } catch (IOException e) {
-                            System.out.println("failed to parse message");
-                        }
-                    } else {
-                        sendAll(message);
-                    }
-     */
-
     void sendAll(Message message) throws IOException {
         int id = message.getSenderID();
-        message.setSender(allNames.get(id));
-        char[] data = message.getMessageChars(true);
+        message.addPrefix(allNames.get(id));
+        char[] messageSet = message.toCharArray();
         for (Connection allConnection : allConnections) {
             if (allConnection != null && allConnection.threadID != id) {
-                allConnection.send(Arrays.copyOf(data, data.length));
+                allConnection.send(Arrays.copyOf(messageSet, messageSet.length));
             }
         }
     }
@@ -73,34 +72,37 @@ public class Server {
     }
 
     public void addToQueue(Message m) {
+        System.out.println("added to queue");
         messageQueue.add(m);
+        System.out.println(messageQueue.size());
+        System.out.println(messageQueue.isEmpty());
     }
 
     public void addConnection(Connection c) {
         allConnections.add(c);
         allNames.add("default");
+        System.out.println("connection:" + allConnections.size());
 
     }
 
 
     //TODO fix this entirely
-    /*private void parseInfo(Message info) throws IOException { // **&**!^&@ is the magic startframe lmao
-        String command = info.getPrivCommandType();
-        switch (command) {
+    private void executeCommand(Message info) throws IOException {
+        int senderID = info.getSenderID();
+        switch (info.getCommand()) {
             case "name:":
-                allNames.set(threadID, info.getReceiver());
-                String message = "Name is set to: " + info.getReceiver();
-                send(message.toCharArray(), info.getSenderID());
+                allNames.set(senderID, info.getArguments());
+                String message = "Name is set to: " + info.getArguments();
+                send(message.toCharArray(), senderID);
                 break;
             case "pmsg:":
-                int senderID = info.getSenderID();
-                if (allNames.contains(info.getReceiver())) {
-                    int receiver = allNames.indexOf(info.getReceiver());
+                if (allNames.contains(info.getArguments())) {
+                    int receiver = allNames.indexOf(info.getArguments());
                     String sender = allNames.get(senderID);
                     String toSend = sender + " whispers:" + info.getMessage();
                     send(toSend.toCharArray(), receiver);
                 } else {
-                    String error = info.getReceiver() + " is offline or not found";
+                    String error = info.getArguments() + " is offline or not found";
                     send(error.toCharArray(), senderID);
                 }
                 break;
@@ -108,11 +110,11 @@ public class Server {
                 String online = allNames.toString();
                 online = online.replace("[", "");
                 online = online.replace("]", "");
-                send(online.toCharArray(), info.getSenderID());
+                send(online.toCharArray(), senderID);
                 break;
             }
             case "quit:":
-                this.close();
+                this.clientDisconnect(senderID);
         }
-    }*/
+    }
 }
