@@ -8,30 +8,32 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.PriorityQueue;
 
 public class Connection implements Runnable {
 
 
     private static int threadIDCounter = 0;
+    private static PriorityQueue queue;
     final int threadID;
     private Socket socket;
     private InputStreamReader input;
     private OutputStreamWriter output;
     private Encryptor encryptor;
-    private static ArrayList<Connection> allConnections = Server.allConnections;
-    private static ArrayList<String> allNames = Server.allNames;
+    private final Server server;
 
-    public Connection(Socket socket) throws IOException {
+    public Connection(Socket socket, Server s) throws IOException {
         this.socket = socket;
         input = new InputStreamReader(this.socket.getInputStream());
         output = new OutputStreamWriter(this.socket.getOutputStream());
         encryptor = Encryptor.negotiateKeysServerSide(input, output);
+        queue = new PriorityQueue();
+        server = s;
         this.threadID = threadIDCounter++;
-        allNames.add("default");
         send(threadID); //informs client of it's ID
     }
+
 
     @Override
     public void run() {
@@ -42,15 +44,7 @@ public class Connection implements Runnable {
                 if (decryptedMessage != null) {
                     int checksum = Checksum.calculateCheckSum(decryptedMessage);
                     Message message = new Message(decryptedMessage);
-                    if (message.isPrivCommand()) {
-                        try {
-                            parseInfo(message);
-                        } catch (IOException e) {
-                            System.out.println("failed to parse message");
-                        }
-                    } else {
-                        Server.sendAll(message);
-                    }
+                    server.addToQueue(message);
                     if (decryptedMessage.length == 0 && decryptedMessage[0] == 26) {
                         socketOpen = false;
                     }
@@ -74,15 +68,10 @@ public class Connection implements Runnable {
         output.flush();
     }
 
-    private void send(int i) throws IOException {
+    void send(int i) throws IOException {
         char[] sendable = new char[1];
         sendable[0] = (char) i;
         send(sendable);
-    }
-
-    private void send(char[] message, int threadNum) throws IOException {
-        Connection target = allConnections.get(threadNum);
-        target.send(message);
     }
 
     /**
@@ -103,39 +92,8 @@ public class Connection implements Runnable {
         //input.close();
         // output.close();  //turns out these close the socket for every thread.
         //socket.close();
-        allConnections.set(threadID, null);
-        allNames.set(threadID, null);
+//TODO need to remove somehow
     }
 
-    private void parseInfo(Message info) throws IOException { // **&**!^&@ is the magic startframe lmao
-        String command = info.getPrivCommandType();
-        switch (command) {
-            case "name:":
-                allNames.set(threadID, info.getReceiver());
-                String message = "Name is set to: " + info.getReceiver();
-                send(message.toCharArray(), info.getSenderID());
-                break;
-            case "pmsg:":
-                int senderID = info.getSenderID();
-                if (allNames.contains(info.getReceiver())) {
-                    int receiver = allNames.indexOf(info.getReceiver());
-                    String sender = allNames.get(senderID);
-                    String toSend = sender + " whispers:" + info.getMessage();
-                    send(toSend.toCharArray(), receiver);
-                } else {
-                    String error = info.getReceiver() + " is offline or not found";
-                    send(error.toCharArray(), senderID);
-                }
-                break;
-            case "online:": {
-                String online = allNames.toString();
-                online = online.replace("[", "");
-                online = online.replace("]", "");
-                send(online.toCharArray(), info.getSenderID());
-                break;
-            }
-            case "quit:":
-                this.close();
-        }
-    }
+
 }
