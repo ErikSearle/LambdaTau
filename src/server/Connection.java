@@ -21,13 +21,15 @@ public class Connection implements Runnable {
     private InputStreamReader input;
     private OutputStreamWriter output;
     private Encryptor encryptor;
+    private final Server server;
 
-    public Connection(Socket socket) throws IOException {
+    public Connection(Socket socket, Server s) throws IOException {
         this.socket = socket;
         input = new InputStreamReader(this.socket.getInputStream());
         output = new OutputStreamWriter(this.socket.getOutputStream());
         encryptor = Encryptor.negotiateKeysServerSide(input, output);
         queue = new PriorityQueue();
+        server = s;
         this.threadID = threadIDCounter++;
         send(threadID); //informs client of it's ID
     }
@@ -45,7 +47,7 @@ public class Connection implements Runnable {
                 if (decryptedMessage != null) {
                     int checksum = Checksum.calculateCheckSum(decryptedMessage);
                     Message message = new Message(decryptedMessage);
-                    queue.add(message);
+                    server.addToQueue(message);
                     if (decryptedMessage.length == 0 && decryptedMessage[0] == 26) {
                         socketOpen = false;
                     }

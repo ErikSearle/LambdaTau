@@ -17,21 +17,19 @@ public class Server {
     private boolean online;
     private Thread socketThread;
 
-    public Server(int port) throws IOException{
+    public Server(int port) throws IOException {
         allConnections = new ArrayList<>();
         allNames = new ArrayList<>();
-        socket = new ServerSocketListener(port);
+        socket = new ServerSocketListener(port, this); //todo write better object communication
         socketThread = new Thread(socket);
     }
 
     public void start() {
         online = true;
-        socket.setConnectionList(allConnections);
-        socket.setNameList(allNames);
         socketThread.start();
         System.out.println("started");
         while (online) {
-            updateQueue();
+            ;
             if (allNames.size() > 1) {
                 System.out.println(allNames);
             }
@@ -74,9 +72,14 @@ public class Server {
         allNames.set(threadID, null);
     }
 
-    private void updateQueue() {
-        PriorityQueue q = Connection.getQueue();
-        messageQueue.addAll(q);
+    public void addToQueue(Message m) {
+        messageQueue.add(m);
+    }
+
+    public void addConnection(Connection c) {
+        allConnections.add(c);
+        allNames.add("default");
+
     }
 
 
