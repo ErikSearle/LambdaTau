@@ -1,5 +1,7 @@
 package client;
 
+import UsefulTools.Message;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -22,7 +24,7 @@ public class ClientApplication {
             System.out.print("Failed to Connect. Exiting...");
             System.exit(0);
         }
-        setName();
+        setName(Message.newMessageParse("/rename", myClient.ID));
     }
 
     public ClientApplication(InetAddress address, int port) {
@@ -36,42 +38,44 @@ public class ClientApplication {
             System.out.print("Failed to Connect. Exiting...");
             System.exit(0);
         }
-        setName();
+        setName(Message.newMessageParse("/name", myClient.ID));
     }
 
     public void start() {
         System.out.println("Connected!");
-        System.out.println("Welcome to the server " + myName);
-        String readString = "";
+        Message output = new Message();
+        Message input = new Message();
         while (running) {
             try {                                   //reading console
                 if (reader.ready()) {
-                    readString = reader.readLine();
+                    output = Message.newMessageParse(reader.readLine(), myClient.ID);
                 }
             } catch (IOException e) {
                 e.printStackTrace();
                 System.out.println("Error reading message");
             }
 
-            if (!readString.isEmpty() && readString.charAt(0) == '/') { //checking if it's a command
-                handleStringCommands(readString);
-                readString = "";
-            } else if (!readString.isEmpty()) { //not a command, but not empty so send message
-                String message = myName + ": " + readString;
+            if (output.isSlashCommand()) { //checking if it's a command
+                handleStringCommands(output);
+                output = new Message();
+            } else if (!output.isEmpty()) { //not a command, but not empty so send message
                 try {
-                    myClient.send(message);
+                    myClient.send(output.toCharArray());
                 } catch (IOException e) {
                     e.printStackTrace();
                     System.out.println("Send Message Failed");
                 }
-                readString = "";
+                output = new Message();
             }
             try {
                 if (myClient.ready()) { //if the client has data then grab and print
-                    System.out.println(myClient.receive());
+                    input = Message.newMessageParse(myClient.receive(), myClient.ID);
                 }
             } catch (IOException e) {
                 e.printStackTrace();
+            }
+            if (input.isMessage()) {
+                System.out.println(input.getMessage());
             }
         }
         System.out.println("Disconnected");
@@ -82,29 +86,28 @@ public class ClientApplication {
         }
     }
 
-    private void handleStringCommands(String s) {
-        s = s.toLowerCase();
-        String name = "";
-        if (s.startsWith("/msg")) { //peeling the name off the command so the switch works
-            name = s.substring(5);
-            s = s.substring(0, 4);
-        }
-        switch (s) {
+    private void handleStringCommands(Message data) {
+        switch (data.getCommand()) {
             case "/help": {
                 System.out.println("Commands are:");
                 System.out.println("/quit to quit");
                 System.out.println("/uptime to show current connected session time");
-                System.out.println("/rename to change current name");
-                System.out.println("/msg +username to private message");
+                System.out.println("/rename to start name change routine");
+                System.out.println("/msg +username then message to private message");
                 System.out.println("/online to see all online users");
                 break;
             }
             case "/quit": {
                 running = false;
+                try {
+                    myClient.send(data.toCharArray());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 break;
             }
             case "/rename": {
-                setName();
+                setName(data);
                 break;
             }
             case "/uptime": {
@@ -114,11 +117,19 @@ public class ClientApplication {
                 break;
             }
             case "/online": {
-                System.out.println("not implemented yet");
+                try {
+                    myClient.send(data.toCharArray());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 break;
             }
             case "/msg": {
-                System.out.println("not implemented yet msg attempt to: " + name);
+                try {
+                    myClient.send(data.toCharArray());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 break;
             }
             default: {
@@ -127,11 +138,18 @@ public class ClientApplication {
         }
     }
 
-    private void setName() {
+    private void setName(Message nameMessage) {
         System.out.println("Please input your handle:");
         try {
             while (!reader.ready()) ;
             myName = reader.readLine();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            nameMessage.toSysCommand();
+            nameMessage.setArguments(myName);
+            myClient.send(nameMessage.toCharArray());
         } catch (IOException e) {
             e.printStackTrace();
         }

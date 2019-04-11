@@ -1,5 +1,6 @@
 package server;
 
+import UsefulTools.Message;
 import security.Checksum;
 import security.Encryptor;
 
@@ -7,44 +8,50 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.PriorityQueue;
 
 public class Connection implements Runnable {
 
 
     private static int threadIDCounter = 0;
+    private static PriorityQueue queue;
+    final int threadID;
     private Socket socket;
     private InputStreamReader input;
     private OutputStreamWriter output;
     private Encryptor encryptor;
-    private final int threadID;
-    private static ArrayList<Connection> connections = Server.allConnections;
+    private final Server server;
 
-    public Connection(Socket socket) throws IOException {
+    public Connection(Socket socket, Server s) throws IOException {
         this.socket = socket;
         input = new InputStreamReader(this.socket.getInputStream());
         output = new OutputStreamWriter(this.socket.getOutputStream());
         encryptor = Encryptor.negotiateKeysServerSide(input, output);
+        queue = new PriorityQueue();
+        server = s;
         this.threadID = threadIDCounter++;
+        send(threadID); //informs client of it's ID
     }
 
+
     @Override
-    public void run(){
+    public void run() {
         boolean socketOpen = true;
         try {
             while (socketOpen) {
                 char[] decryptedMessage = receive();
                 if (decryptedMessage != null) {
                     int checksum = Checksum.calculateCheckSum(decryptedMessage);
-                    Server.sendAll(decryptedMessage);
+                    Message message = new Message(decryptedMessage);
+                    server.addToQueue(message);
                     if (decryptedMessage.length == 0 && decryptedMessage[0] == 26) {
                         socketOpen = false;
                     }
                 }
             }
             close();
-        } catch(IOException e){
+        } catch (IOException e) {
             System.out.println(e.getMessage());
             System.exit(1);
         }
@@ -61,7 +68,7 @@ public class Connection implements Runnable {
         output.flush();
     }
 
-    private void send(int i) throws IOException {
+    void send(int i) throws IOException {
         char[] sendable = new char[1];
         sendable[0] = (char) i;
         send(sendable);
@@ -82,9 +89,11 @@ public class Connection implements Runnable {
     }
 
     private void close() throws IOException {
-        input.close();
-        output.close();
-        socket.close();
-        connections.set(threadID, null);
+        //input.close();
+        // output.close();  //turns out these close the socket for every thread.
+        //socket.close();
+//TODO need to remove somehow
     }
+
+
 }
