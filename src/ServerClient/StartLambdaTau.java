@@ -8,6 +8,7 @@ public class StartLambdaTau {
 
 
     }
+    //TODO start server and pass port, max players
     public static void printWelcome() throws IOException {//print the welcome screen
 
         System.out.println("Welcome to:");
@@ -22,6 +23,7 @@ public class StartLambdaTau {
                 "\n");
 
         ServerProperties properties = new ServerProperties();
+        properties.loadPropertiesFile();
     }
 
 }
