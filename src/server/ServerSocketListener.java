@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.net.ServerSocket;
 
 public class ServerSocketListener implements Runnable {
-    private ServerSocket socket;
     Server server;
+    private ServerSocket socket;
 
     public ServerSocketListener(int port, Server s) throws IOException {
         socket = new ServerSocket(port);
@@ -16,7 +16,6 @@ public class ServerSocketListener implements Runnable {
         while (!socket.isClosed()) {
             Connection connection = new Connection(socket.accept(), server);
             server.addConnection(connection);
-            System.out.println("added");
             Thread thread = new Thread(connection);
             thread.start();
         }

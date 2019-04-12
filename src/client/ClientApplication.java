@@ -48,7 +48,10 @@ public class ClientApplication {
         while (running) {
             try {                                   //reading console
                 if (reader.ready()) { //todo empty string crashes this.
-                    output = Message.newMessageParse(reader.readLine(), myClient.ID);
+                    String temp = reader.readLine();
+                    if (!temp.isEmpty()) {
+                        output = Message.newMessageParse(temp, myClient.ID);
+                    }
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -101,6 +104,7 @@ public class ClientApplication {
             case "/quit": {
                 running = false;
                 try {
+                    data.toSysCommand();
                     myClient.send(data.toCharArray());
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -119,6 +123,7 @@ public class ClientApplication {
             }
             case "/online": {
                 try {
+                    data.toSysCommand();
                     myClient.send(data.toCharArray());
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -127,6 +132,7 @@ public class ClientApplication {
             }
             case "/msg": {
                 try {
+                    data.toSysCommand();
                     myClient.send(data.toCharArray());
                 } catch (IOException e) {
                     e.printStackTrace();

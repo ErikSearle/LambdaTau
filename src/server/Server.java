@@ -27,7 +27,7 @@ public class Server {
     public void start() {
         online = true;
         socketThread.start();
-        System.out.println("started");
+        System.out.println("Started");
         Message current;
         while (online) {
             if (!messageQueue.isEmpty()) {
@@ -71,7 +71,6 @@ public class Server {
     }
 
     public void addToQueue(Message m) {
-        System.out.println("added to queue");
         messageQueue.add(m);
     }
 
@@ -82,7 +81,6 @@ public class Server {
     }
 
 
-    //TODO fix pmsg and online return messages
     private void executeCommand(Message info) throws IOException {
         int senderID = info.getSenderID();
         switch (info.getCommand()) {
@@ -95,18 +93,22 @@ public class Server {
                 if (allNames.contains(info.getArguments())) {
                     int receiver = allNames.indexOf(info.getArguments());
                     String sender = allNames.get(senderID);
-                    info.addPrefix(sender + "whispers: ");
+                    info = Message.newMessageParse(sender + " whispers: " + info.getMessage(), Character.MAX_VALUE);
                     send(info.toCharArray(), receiver);
                 } else {
                     String error = info.getArguments() + " is offline or not found";
-                    send(error.toCharArray(), senderID);
+                    Message returnMsg = Message.newMessageParse(error, Character.MAX_VALUE);
+                    send(returnMsg.toCharArray(), senderID);
                 }
                 break;
             case "online:": {
-                String online = allNames.toString();
+                String online = "Currently Online: " + allNames.toString();
                 online = online.replace("[", "");
                 online = online.replace("]", "");
-                send(online.toCharArray(), senderID);
+                online = online.replaceAll("null,", "");
+                online = online.replaceAll("\\s{2,}", " ");
+                Message onlineMessage = Message.newMessageParse(online, Character.MAX_VALUE);
+                send(onlineMessage.toCharArray(), senderID);
                 break;
             }
             case "quit:":

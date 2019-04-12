@@ -109,13 +109,14 @@ public class Message implements Comparable<Message> {
             case "pmsg:":
                 system = s;
                 pos = system.indexOf(" ");
-                String temp = system.substring(0, pos);
-                command = temp;
-                int pos2 = temp.indexOf(" ");
-                temp = system.substring(pos, pos2);
-                arguments = temp;
+                String temp = system.substring(0, pos + 1);
+                command = temp.trim();
+                system = system.replace(temp, "");
+                int pos2 = system.indexOf(" ");
+                temp = system.substring(0, pos2 + 1);
+                arguments = temp.trim();
                 temp = system.substring(pos2);
-                message = temp;
+                message = temp.trim();
                 break;
             case "quit:":
             case "online:":
@@ -126,9 +127,9 @@ public class Message implements Comparable<Message> {
                 system = s;
                 pos = system.indexOf(" ");
                 temp = system.substring(0, pos);
-                command = temp;
+                command = temp.trim();
                 temp = system.substring(pos);
-                arguments = temp;
+                arguments = temp.trim();
                 break;
         }
     }
@@ -159,8 +160,6 @@ public class Message implements Comparable<Message> {
                 temp = system.substring(pos + 1);
                 message = temp;
                 break;
-            default:
-                System.out.println("unsupported message type");
         }
     }
 
@@ -189,7 +188,9 @@ public class Message implements Comparable<Message> {
     }
 
     private void rebuildFullMessage() {
-        fullMessage = messageType + " " + senderID + " " + command + " " + arguments + " " + message;
+        String string = messageType + " " + senderID + " " + command + " " + arguments + " " + message;
+        string = string.replaceAll("\\s{2,}", " ");
+        fullMessage = string;
     }
 
     public boolean isSlashCommand() {

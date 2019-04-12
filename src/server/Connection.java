@@ -44,8 +44,6 @@ public class Connection implements Runnable {
                 if (decryptedMessage != null) {
                     int checksum = Checksum.calculateCheckSum(decryptedMessage);
                     Message message = new Message(decryptedMessage);
-                    System.out.println(message);
-                    System.out.println(message.getMessage());
                     server.addToQueue(message);
                     if (decryptedMessage.length == 0 && decryptedMessage[0] == 26) {
                         socketOpen = false;
