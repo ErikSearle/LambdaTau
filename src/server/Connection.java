@@ -1,7 +1,6 @@
 package server;
 
 import UsefulTools.Message;
-import security.Checksum;
 import security.Encryptor;
 
 import java.io.IOException;
@@ -13,7 +12,6 @@ import java.util.PriorityQueue;
 
 public class Connection implements Runnable {
 
-
     private static int threadIDCounter = 0;
     private static PriorityQueue queue;
     final int threadID;
@@ -22,6 +20,7 @@ public class Connection implements Runnable {
     private OutputStreamWriter output;
     private Encryptor encryptor;
     private final Server server;
+    private static BakeryAlgorithm sync;
 
     public Connection(Socket socket, Server s) throws IOException {
         this.socket = socket;
@@ -30,6 +29,7 @@ public class Connection implements Runnable {
         encryptor = Encryptor.negotiateKeysServerSide(input, output);
         queue = new PriorityQueue();
         server = s;
+        sync = new BakeryAlgorithm(server.max_users);
         this.threadID = threadIDCounter++;
         send(threadID); //informs client of it's ID
     }
@@ -42,9 +42,10 @@ public class Connection implements Runnable {
             while (socketOpen) {
                 char[] decryptedMessage = receive();
                 if (decryptedMessage != null) {
-                    int checksum = Checksum.calculateCheckSum(decryptedMessage);
                     Message message = new Message(decryptedMessage);
+                    sync.bakery(1);         //to make sure that the queue is not filled by two or more threads at the same time
                     server.addToQueue(message);
+                    sync.bakeryExit(1);         //removing the token
                     if (decryptedMessage.length == 0 && decryptedMessage[0] == 26) {
                         socketOpen = false;
                     }
@@ -90,7 +91,7 @@ public class Connection implements Runnable {
 
     private void close() throws IOException {
         //input.close();
-        // output.close();  //turns out these close the socket for every thread.
+        //output.close();  //turns out these close the socket for every thread.
         //socket.close();
 //TODO need to remove somehow
     }

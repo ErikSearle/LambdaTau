@@ -27,6 +27,7 @@ public class Server implements Runnable{
     private ServerSocketListener socket;
     private boolean online;
     private Thread socketThread;
+    final int max_users;
 
     public Server(String server_name, int port, int max_users) throws IOException {
         this.server_name = server_name;
@@ -36,6 +37,7 @@ public class Server implements Runnable{
         allNames = new ArrayList<>();
         socket = new ServerSocketListener(port, this);
         socketThread = new Thread(socket);
+        max_users = 10;
     }
 
     public void start() {
