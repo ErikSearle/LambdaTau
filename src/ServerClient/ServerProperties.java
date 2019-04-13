@@ -1,10 +1,7 @@
 package ServerClient;
 
-import sun.nio.cs.StandardCharsets;
-
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -20,8 +17,6 @@ public class ServerProperties {
     private Scanner in;
     private File server_properties;
     private List<String> lines;
-
-
     public ServerProperties() throws IOException {
 
         try {
@@ -39,7 +34,19 @@ public class ServerProperties {
         }
     }
 
-    public void loadPropertiesFile()  {
+    public String getServer_name() {
+        return server_name;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public int getMax_users() {
+        return max_users;
+    }
+
+    public void loadPropertiesFile() {
         try {
             if (server_properties.createNewFile()) {
                 propertiesContents();
@@ -47,26 +54,24 @@ public class ServerProperties {
             } else {
                 System.out.println("Loading properties file..." + "\n");
 
-                in.skip("Server Name =\\s*");
+                in.skip("Server Name =\\s*");//grabs the name
                 server_name = in.nextLine();
-                in.skip("Port =\\s*");
+                in.skip("Port =\\s*");//grabs the port number
                 port = in.nextInt();
                 in.nextLine();
-                in.skip("Max users =\\s*");
+                in.skip("Max users =\\s*");//grabs the max number of users from the file
                 max_users = in.nextInt();
 
 
             }
-        }
-        catch (IOException e){
+        } catch (IOException e) {
             System.out.println("Error Loading Server Properties!");
             System.out.println("Defaulting server properties");
 
             server_name = "LamdaTau";
             port = 8080;
             max_users = 10;
-        }
-        finally {
+        } finally {
             System.out.println("Properties loaded");
             System.out.println("Server Name : " + server_name);
             System.out.println("Bound to port Number : " + port);
@@ -74,15 +79,13 @@ public class ServerProperties {
         }
 
 
+    }
 
-
-        }
-
-        private void propertiesContents(){
-            lines = Arrays.asList("Server Name = LambdaTau","Port = 8080", "Max users = 10");
-            server_name = "LambdaTau";
-            port = 8080;
-            max_users = 10;
-        }
+    private void propertiesContents() {//defaults the server properties
+        lines = Arrays.asList("Server Name = LambdaTau", "Port = 8080", "Max users = 10");
+        server_name = "LambdaTau";
+        port = 8080;
+        max_users = 10;
+    }
 
 }

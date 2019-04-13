@@ -42,7 +42,6 @@ public class ClientApplication {
     }
 
     public void start() {
-        System.out.println("Connected!");
         Message output = new Message();
         Message input = new Message();
         while (running) {

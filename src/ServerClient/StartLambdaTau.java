@@ -1,14 +1,19 @@
 package ServerClient;
 
+import server.Server;
+
 import java.io.IOException;
 
 public class StartLambdaTau {
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException  {
     printWelcome();
-
-
+    ServerProperties properties = new ServerProperties();
+    properties.loadPropertiesFile();
+    Server server_start = new Server(properties.getServer_name(),properties.getPort(),properties.getMax_users());
+    Thread running = new Thread(server_start);
+    running.start();
     }
-    //TODO start server and pass port, max players
+
     public static void printWelcome() throws IOException {//print the welcome screen
 
         System.out.println("Welcome to:");
@@ -22,8 +27,7 @@ public class StartLambdaTau {
                 "                                                        \n" +
                 "\n");
 
-        ServerProperties properties = new ServerProperties();
-        properties.loadPropertiesFile();
+
     }
 
 }
