@@ -1,0 +1,3 @@
+Server Name = LambdaTau main
+Port = 1111
+Max users = 09
