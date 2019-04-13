@@ -16,12 +16,14 @@ public class Server {
     private ServerSocketListener socket;
     private boolean online;
     private Thread socketThread;
+    final int max_users;
 
     public Server(int port) throws IOException {
         allConnections = new ArrayList<>();
         allNames = new ArrayList<>();
         socket = new ServerSocketListener(port, this);
         socketThread = new Thread(socket);
+        max_users = 10;
     }
 
     public void start() {
