@@ -1,3 +1,0 @@
-Server Name = LambdaTau
-Port = 8080
-Max users = 2
