@@ -1,5 +1,6 @@
 package server;
 
+import UsefulTools.ColourErrors;
 import UsefulTools.Message;
 import security.Encryptor;
 
@@ -21,6 +22,7 @@ public class Connection implements Runnable {
     private Encryptor encryptor;
     private final Server server;
     private static BakeryAlgorithm sync;
+    private ColourErrors error = new ColourErrors();
 
     public Connection(Socket socket, Server s) throws IOException {
         this.socket = socket;
@@ -43,12 +45,19 @@ public class Connection implements Runnable {
                 char[] decryptedMessage = receive();
                 if (decryptedMessage != null) {
                     Message message = new Message(decryptedMessage);
-                    sync.bakery(1);         //to make sure that the queue is not filled by two or more threads at the same time
-                    server.addToQueue(message);
-                    sync.bakeryExit(1);         //removing the token
-                    if (decryptedMessage.length == 0 && decryptedMessage[0] == 26) {
+                    try {
+                        sync.bakery(threadID);         //to make sure that the queue is not filled by two or more threads at the same time
+                        server.addToQueue(message);
+                        sync.bakeryExit(threadID);         //removing the token
+                    } catch (ArrayIndexOutOfBoundsException e){
+                        error.redError("Your server is too popular!");
+                        error.redError("Try increasing max players in the properties file!");
                         socketOpen = false;
                     }
+                        if (decryptedMessage.length == 0 && decryptedMessage[0] == 26) {
+                            socketOpen = false;
+                        }
+
                 }
             }
             close();

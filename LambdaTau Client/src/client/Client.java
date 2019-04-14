@@ -88,11 +88,11 @@ public class Client {
      *
      * @throws IOException Unable to close
      */
-    public void close() throws IOException {
-        input.close();
-        output.close();
-        socket.close();
-    }
+//    public void close() throws IOException {
+//        input.close();
+//        output.close();
+//        socket.close();
+//    }
 
     public boolean ready() throws IOException {
         return input.ready();

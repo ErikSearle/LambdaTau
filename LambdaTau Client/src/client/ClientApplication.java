@@ -42,7 +42,6 @@ public class ClientApplication {
     }
 
     public void start() {
-        System.out.println("Connected!");
         Message output = new Message();
         Message input = new Message();
         while (running) {
@@ -81,13 +80,17 @@ public class ClientApplication {
                 System.out.println(input.getMessage());
                 input = new Message();
             }
+            if (input.isSlashCommand()) { //checking if it's a command
+                handleStringCommands(input);
+                input = new Message();
+            }
         }
         System.out.println("Disconnected");
-        try {
-            myClient.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            myClient.close();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
     }
 
     private void handleStringCommands(Message data) {
