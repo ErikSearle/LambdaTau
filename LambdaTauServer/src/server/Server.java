@@ -63,6 +63,7 @@ public class Server implements Runnable{
                 }
             }
         }
+        System.exit(0);
     }
 
     void sendAll(Message message) throws IOException {
@@ -147,9 +148,21 @@ public class Server implements Runnable{
                 send(onlineMessage.toCharArray(), senderID);
                 break;
             }
-            case "quit:":
+            case "quit:": {
                 this.clientDisconnect(senderID);
+                break;
+            }
+            case "shutdown:": {
+                for(int i = 0; i< allConnections.size(); i++){
+                    if(allConnections.get(i) != null)
+                    this.clientDisconnect(i);
+
+                }
+                socket.close();
+                this.online = false;
+            }
         }
+
     }
 
 

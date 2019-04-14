@@ -4,7 +4,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Scanner;
 
-public class Main {
+public class ClientStartup {
     public static void main(String[] args) {
         ClientApplication client = null;
         switch (args.length) {
