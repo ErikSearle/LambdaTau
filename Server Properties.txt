@@ -1,3 +1,5 @@
 Server Name = LambdaTau
 Port = 8080
 Max users = 10
+Admin Port = 8081
+Admin Password = 1111

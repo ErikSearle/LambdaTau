@@ -6,19 +6,28 @@ import java.util.Scanner;
 
 public class AdminClientStartup {
     public static void main(String[] args) {
-        ClientApplication client = null;
+        AdminClientApplication client = null;
         switch (args.length) {
-            case 1: {
+            case 2: {
+                int port = 0;
                 try {
-                    client = new ClientApplication(Integer.valueOf(args[0]));
+                    port = Integer.valueOf(args[0]);
+                } catch(NumberFormatException e){
+                    System.out.println("Invalid port added to arguments");
+                    System.exit(0);
+                }
+                String password = String.valueOf(args[1]);
+                try {
+                    client = new AdminClientApplication(port, password);
                 } catch (NumberFormatException a) {
                     System.out.println("Not a valid Argument");
                     System.exit(0);
                 }
                 break;
             }
-            case 2: {
+            case 3: {
                 String ip = args[0];
+
                 int port = 0;
                 InetAddress address = null;
                 try {
@@ -27,6 +36,7 @@ public class AdminClientStartup {
                     System.out.println("Not a valid port");
                     System.exit(0);
                 }
+                String password = args[2];
                 if (Character.isDigit(ip.charAt(0))) {
                     try {
                         address = InetAddress.getByAddress(stringToByte(ip));
@@ -44,7 +54,7 @@ public class AdminClientStartup {
                         System.exit(0);
                     }
                 }
-                client = new ClientApplication(address, port);
+                client = new AdminClientApplication(address, port, password);
 
             }
             break;
@@ -52,12 +62,12 @@ public class AdminClientStartup {
                 int port = -1;
                 InetAddress address = null;
                 boolean getInfo = true;
-                System.out.println("No IP or port information found");
+                System.out.println("No IP, port, or password information found");
                 while (getInfo) {
                     System.out.println("Please type desired IP or host name, 0 if localhost");
                     Scanner scanner = new Scanner(System.in);
                     String ip = scanner.next();
-                    System.out.println("Please type desired port, 0 if default (8080)");
+                    System.out.println("Please type desired port, 0 if default (8081)");
                     String portString = scanner.next();
                     try {
                         port = Integer.valueOf(portString);
@@ -65,25 +75,27 @@ public class AdminClientStartup {
                         System.out.println("Not a valid port");
                         port = -1;
                     }
-                    if (ip.charAt(0) == '0' && port != 0) {
-                        client = new ClientApplication(port);
+                    System.out.println("Please enter the server admin password, 0 if default (1111)");
+                    String password = scanner.next();
+                    if (ip.charAt(0) == '0' && port != 0 ) {
+                        client = new AdminClientApplication(port,password);
                         getInfo = false;
 
-                    } else if (ip.charAt(0) == '0' && port == 0) {
-                        client = new ClientApplication(8080);
+                    } else if (ip.charAt(0) == '0' && port == 0 && password.equals("0")) {
+                        client = new AdminClientApplication(8081,"1111");
                         getInfo = false;
-                    } else if (Character.isDigit(ip.charAt(0)) && port > 0) {
+                    } else if (Character.isDigit(ip.charAt(0)) && port > 0 && password != "") {
                         try {
                             address = InetAddress.getByAddress(stringToByte(ip));
-                            client = new ClientApplication(address, port);
+                            client = new AdminClientApplication(address, port, password);
                             getInfo = false;
                         } catch (UnknownHostException e) {
                         }
                     } else {
-                        if (Character.isAlphabetic(ip.charAt(0)) && port > 0) {
+                        if (Character.isAlphabetic(ip.charAt(0)) && port > 0 && password != "") {
                             try {
                                 address = InetAddress.getByName(ip);
-                                client = new ClientApplication(address, port);
+                                client = new AdminClientApplication(address, port,password);
                                 getInfo = false;
                             } catch (UnknownHostException e) {
                                 e.printStackTrace();

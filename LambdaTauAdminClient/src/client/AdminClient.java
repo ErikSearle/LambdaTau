@@ -12,7 +12,7 @@ import java.util.Arrays;
 public class AdminClient {
 
     final int ID;
-    private String password;
+    final String password;
     private Socket socket;
     private InputStreamReader input;
     private OutputStreamWriter output;

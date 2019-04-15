@@ -9,7 +9,7 @@ public class StartLambdaTau {
     printWelcome();
     ServerProperties properties = new ServerProperties();
     properties.loadPropertiesFile();
-    Server server_start = new Server(properties.getServer_name(),properties.getPort(),properties.getMax_users());
+    Server server_start = new Server(properties.getServer_name(),properties.getPort(),properties.getMax_users(),properties.getAdmin_port(),properties.getPassword());
     Thread running = new Thread(server_start);
     running.start();
     }

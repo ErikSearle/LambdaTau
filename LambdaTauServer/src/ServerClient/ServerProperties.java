@@ -14,6 +14,8 @@ public class ServerProperties {
     private String server_name;
     private int port;
     private int max_users;
+    private String password;
+    private int admin_port;
     private Scanner in;
     private File server_properties;
     private List<String> lines;
@@ -23,7 +25,6 @@ public class ServerProperties {
 
             server_properties = new File("Server Properties.txt");
             in = new Scanner(server_properties);
-            //System.out.println("Properties found");
         } catch (FileNotFoundException e) {
             System.out.println("Properties not found");
             server_properties = new File("Server Properties.txt");
@@ -32,6 +33,14 @@ public class ServerProperties {
             Files.write(Paths.get("Server Properties.txt"), lines, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
             in = new Scanner(server_properties);
         }
+    }
+
+    public int getAdmin_port() {
+        return admin_port;
+    }
+
+    public String getPassword() {
+        return password;
     }
 
     public String getServer_name() {
@@ -61,6 +70,12 @@ public class ServerProperties {
                 in.nextLine();
                 in.skip("Max users =\\s*");//grabs the max number of users from the file
                 max_users = in.nextInt();
+                in.nextLine();
+                in.skip("Admin Port =\\s*");
+                admin_port = in.nextInt();
+                in.nextLine();
+                in.skip("Admin Password =\\s*");
+                password = in.next();
 
 
             }
@@ -71,21 +86,27 @@ public class ServerProperties {
             server_name = "LamdaTau";
             port = 8080;
             max_users = 10;
+            admin_port = 8081;
+            password = "1111";
         } finally {
             System.out.println("Properties loaded");
             System.out.println("Server Name : " + server_name);
             System.out.println("Bound to port Number : " + port);
             System.out.println("Maximum users : " + max_users);
+            System.out.println("Admin Server Port : " + admin_port);
+            System.out.println("Admin password : " + password);
         }
 
 
     }
 
     private void propertiesContents() {//defaults the server properties
-        lines = Arrays.asList("Server Name = LambdaTau", "Port = 8080", "Max users = 10");
+        lines = Arrays.asList("Server Name = LambdaTau", "Port = 8080", "Max users = 10", "Admin Port = 8081", "Admin Password = 1111");
         server_name = "LambdaTau";
         port = 8080;
         max_users = 10;
+        admin_port = 8081;
+        password = "1111";
     }
 
 }

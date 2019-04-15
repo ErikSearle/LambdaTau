@@ -1,6 +1,6 @@
 package client;
 
-import UsefulTools.AdminMessage;
+import UsefulTools.Message.*;
 import UsefulTools.Message;
 
 import java.io.BufferedReader;
@@ -14,8 +14,10 @@ public class AdminClientApplication {
     private boolean running;
     private String myName;
     private long startTime;
+    private String password;
 
     public AdminClientApplication(int port, String password) {
+        this.password = password;
         reader = new BufferedReader(new InputStreamReader(System.in));
         running = true;
         startTime = System.currentTimeMillis() / 60000;
@@ -43,14 +45,14 @@ public class AdminClientApplication {
     }
 
     public void start() {
-        AdminMessage output = new AdminMessage();
-        AdminMessage input = new AdminMessage();
+        Message output = new AdminMessage();
+        Message input = new Message.AdminMessage();
         while (running) {
             try {                                   //reading console
                 if (reader.ready()) {
                     String temp = reader.readLine();
                     if (!temp.isEmpty()) {
-                        output = AdminMessage.newMessageParse(temp, myClient.ID);
+                        output = Message.AdminMessage.newMessageParse(temp, myClient.ID, myClient.password);
                     }
                 }
             } catch (IOException e) {
@@ -58,32 +60,29 @@ public class AdminClientApplication {
                 System.out.println("Error reading message");
             }
 
-            if (output.isSlashCommand()) { //checking if it's a command
-                handleStringCommands(output);
-                output = new AdminMessage();
-            } else if (!output.isEmpty()) { //not a command, but not empty so send message
+            }  if (!output.isEmpty()) { //not a command, but not empty so send message
                 try {
-                    myClient.send(output.toCharArray());
+                    myClient.send(output.toCharArray() + password);
                 } catch (IOException e) {
                     e.printStackTrace();
                     System.out.println("Send Message Failed");
                 }
-                output = new AdminMessage();
+                output = new Message.AdminMessage();
             }
             try {
                 if (myClient.ready()) { //if the client has data then grab and print
-                    input = new AdminMessage(myClient.receive());
+                    input = new Message.AdminMessage(myClient.receive());
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
             if (input.isMessage()) {
                 System.out.println(input.getMessage());
-                input = new AdminMessage();
+                input = new Message.AdminMessage();
             }
             if (input.isSlashCommand()) { //checking if it's a command
                 handleStringCommands(input);
-                input = new AdminMessage();
+                input = new Message.AdminMessage();
             }
         }
         System.out.println("Disconnected");
@@ -103,6 +102,8 @@ public class AdminClientApplication {
                 System.out.println("/rename to start name change routine");
                 System.out.println("/msg +username then message to private message");
                 System.out.println("/online to see all online users");
+                System.out.println("/shutdown will kick everyone from the server and close the server terminal");
+                System.out.println("/kick [username] will kick the selected user from the server");
                 break;
             }
             case "/quit": {

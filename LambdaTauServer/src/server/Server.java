@@ -1,6 +1,7 @@
 package server;
 
 
+import UsefulTools.AdminMessage;
 import UsefulTools.Message;
 
 import java.io.IOException;
@@ -22,29 +23,38 @@ public class Server implements Runnable{
     private volatile ArrayList<Connection> allConnections;
     private volatile ArrayList<String> allNames;
     private volatile PriorityQueue<Message> messageQueue = new PriorityQueue<>();
+
     private String server_name;
+    private String password;
     final int max_users;
     private ServerSocketListener socket;
+    private AdminServerSocketListener Asocket;
     private boolean online;
     private Thread socketThread;
+    private Thread admin_socket_thread;
 
 
-    public Server(String server_name, int port, int max_users) throws IOException {
+    public Server(String server_name, int port, int max_users, int admin_port, String password) throws IOException {
+        this.password = password;
         this.server_name = server_name;
         welcome = welcome.replace("*", server_name);
         this.max_users = max_users;
         allConnections = new ArrayList<>();
         allNames = new ArrayList<>();
+        Asocket = new AdminServerSocketListener(admin_port,this);
         socket = new ServerSocketListener(port, this);
         socketThread = new Thread(socket);
+        admin_socket_thread = new Thread(Asocket);
 
     }
 
     public void start() {
         online = true;
         socketThread.start();
+        admin_socket_thread.start();
         System.out.println("Server Running");
         Message current;
+
         while (online) {
             if (!messageQueue.isEmpty()) {
                 current = messageQueue.poll();
@@ -95,11 +105,9 @@ public class Server implements Runnable{
         allConnections.add(c);
         allNames.add("default");
         if (allNames.size() > max_users) {
-           // Message too_full = Message.newMessageParse("You are not welcome", Character.MAX_VALUE); TODO figure out how to ge this to send properly
-            String quitString = "2 " + 65535 + " /quit";
+            String quitString = "2 " + (allConnections.size() -1) + " /quit";
             Message quit_command = new Message(quitString);
             try {
-                //send(too_full.toCharArray(), allConnections.size() - 1);TODO see above
                 send(quit_command.toCharArray(), allConnections.size() - 1);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -158,6 +166,54 @@ public class Server implements Runnable{
                     this.clientDisconnect(i);
 
                 }
+                socket.close();
+                this.online = false;
+            }
+        }
+
+    }
+
+    private void executeAdminCommand(AdminMessage info) throws IOException {
+        int senderID = info.getSenderID();
+        switch (info.getCommand()) {
+            case "name:":
+                allNames.set(senderID, info.getArguments());
+                Message message = Message.newMessageParse("\n" + "Name is set to: " + info.getArguments(), Character.MAX_VALUE);
+                send(message.toCharArray(), senderID);
+                break;
+            case "pmsg:":
+                if (allNames.contains(info.getArguments())) {
+                    int receiver = allNames.indexOf(info.getArguments());
+                    String sender = allNames.get(senderID);
+                    info = (AdminMessage) Message.newMessageParse(sender + " whispers: " + info.getMessage(), Character.MAX_VALUE);
+                    send(info.toCharArray(), receiver);
+                } else {
+                    String error = info.getArguments() + " is offline or not found";
+                    Message returnMsg = Message.newMessageParse(error, Character.MAX_VALUE);
+                    send(returnMsg.toCharArray(), senderID);
+                }
+                break;
+            case "online:": {
+                String online = "Currently Online: " + allNames.toString();
+                online = online.replace("[", "");
+                online = online.replace("]", "");
+                online = online.replaceAll("null,", "");
+                online = online.replaceAll("\\s{2,}", " ");
+                Message onlineMessage = Message.newMessageParse(online, Character.MAX_VALUE);
+                send(onlineMessage.toCharArray(), senderID);
+                break;
+            }
+            case "quit:": {
+                this.clientDisconnect(senderID);
+                break;
+            }
+            case "shutdown:": {
+                if(info.isAdminCommand())
+                    for(int i = 0; i< allConnections.size(); i++){
+                        if(allConnections.get(i) != null)
+                            this.clientDisconnect(i);
+
+                    }
                 socket.close();
                 this.online = false;
             }
